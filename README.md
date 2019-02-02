@@ -5,7 +5,7 @@ This is not the answers to assignment 1 for C█CI 30██.
 For this assignment, you will be writing two programs which are designed to talk to each other. One of your programs will be the update server and the other will be the update client. Here is the synopsis of how the two programs interact:
 
 ## TODO
-- Clean up output/console log.
+- ~~Clean up output/console log.~~
 - **Include group names** You must include your name, and a description of the file, in a commented section at the beginning of every file you create.
 - Commenting
 - **Do not use system("pause")** Remove "Press Enter to continue." from program before submitting.
