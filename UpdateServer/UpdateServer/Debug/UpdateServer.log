@@ -1,5 +1,3 @@
-﻿  FileHelper.cpp
-  Server.cpp
-e:\school\_csci 3010\update\updateserver\updateserver\server.cpp(126): warning C4101: 'sendMessage': unreferenced local variable
-  Generating Code...
+﻿  Server.cpp
+e:\school\_csci 3010\update\updateserver\updateserver\server.cpp(128): warning C4101: 'sendMessage': unreferenced local variable
   UpdateServer.vcxproj -> E:\School\_CSCI 3010\Update\UpdateServer\Debug\UpdateServer.exe

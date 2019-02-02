@@ -7,6 +7,7 @@ using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
 
+int requestCount = 0;
 const int STRLEN = 256;
 SOCKET		mySocket;
 const char FILENAME[] = "data.bin";
@@ -14,6 +15,7 @@ const char IPADDR[] = "127.0.0.1";
 const int  PORT = 50000;
 const int  QUERY = 1;
 const int  UPDATE = 2;
+const int HOTSWAP = 5;
 WSADATA		wsaData;
 SOCKET		listenSocket;
 SOCKET		acceptSocket;
@@ -191,10 +193,20 @@ int main()
 			return 1;
 		}
 		closesocket(mySocket);
+	
+		requestCount++;
+		cout << "Request since last update: " << requestCount << "\n";
+		if (requestCount >= HOTSWAP) {
+			cout << "Hot swap updating...\n";
+			localVersion = getLocalVersion();
+			readData(num1, num2);
+			requestCount = 0;
+		}
+
 	}
 
-	std::cout << "Paused. Press Enter to continue.";
-	std::cin.ignore(100000, '\n');
+	//std::cout << "Paused. Press Enter to continue.";
+	//std::cin.ignore(100000, '\n');
 
 	cleanup(acceptSocket);
 
