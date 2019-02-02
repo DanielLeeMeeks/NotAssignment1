@@ -8,6 +8,7 @@ using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 
 int requestCount = 0;
+int requestSinceUpdate = 0;
 const int STRLEN = 256;
 SOCKET		mySocket;
 const char FILENAME[] = "data.bin";
@@ -28,6 +29,7 @@ void cleanup(SOCKET socket)
 {
 	closesocket(socket);
 	WSACleanup();
+	cout << "\tConnection closed";
 }
 
 int getLocalVersion()
@@ -38,7 +40,7 @@ int getLocalVersion()
 	int version = readInt(dataFile);
 	dataFile.close();
 
-	cout << "The server version is: " << version;
+	cout << "Current data file version: v" << version << "\n";
 
 	return version;
 }
@@ -60,6 +62,8 @@ void readData(int& num1, int& num2)
 
 int main()
 {
+
+	cout << "Update server\n";
 
 	int localVersion = getLocalVersion();
 	readData(num1, num2);
@@ -103,13 +107,14 @@ int main()
 		return 1;
 	}
 
+	cout << "Running on port number " << PORT << "\n";
+
 	while (true)
 	{
 	// Start listening for incoming connections
 	if (listen(listenSocket, 1) == SOCKET_ERROR)
 	{
 		cerr << "ERROR: Problem with listening on socket\n";
-		cleanup(listenSocket);
 		return 1;
 	}
 
@@ -122,7 +127,7 @@ int main()
 	// For this program, the listen socket is no longer needed so it will be closed
 	//closesocket(listenSocket);
 
-	cout << "Connected...\n\n";
+	cout << "Connection received\n";
 
 	bool done = false;
 	char		sendMessage[STRLEN];
@@ -131,17 +136,15 @@ int main()
 
 	
 		// Wait to receive a message from the remote computer
-		cout << "\n\t--WAIT--\n\n";
+		//cout << "\n\t--WAIT--\n\n";
 		int iRecv = recv(acceptSocket, recvMessage, STRLEN, 0);
 		if (iRecv > 0)
 		{
-			cout << "Recv > " << recvMessage << "\n";
-			//int iSend = send(acceptSocket, "2", strlen("2") + 1, 0);
-			if (strcmp(recvMessage, "1") == 0) {
-				cout << "getCurrentVersion " << localVersion;
-				//int localVersion = 3;
+			if (strcmp(recvMessage, "1") == 0) { //Request for server version
+				cout << "\tRequest for current version number: v" << localVersion << "\n";
 
-				int iSend = send(acceptSocket, (char*)&localVersion, sizeof(localVersion), 0);//TODO: REAL VERSION
+				//Send server version to client
+				int iSend = send(acceptSocket, (char*)&localVersion, sizeof(localVersion), 0);
 				if (iSend == SOCKET_ERROR)
 				{
 					cerr << "ERROR: Failed to send message\n";
@@ -149,8 +152,8 @@ int main()
 					return 1;
 				}
 			}
-			else if (strcmp(recvMessage, "2") == 0) {
-				cout << "getCurrentVersion";
+			else if (strcmp(recvMessage, "2") == 0) {//Request for server data
+				cout << "\tRequest for update: v" << localVersion << "\n";
 				//SEND 1st number
 				int iSend = send(acceptSocket, (char*)&num1, sizeof(num1) + 1, 0);
 				if (iSend == SOCKET_ERROR)
@@ -177,12 +180,13 @@ int main()
 					return 1;
 				}
 			}
-			//closesocket(acceptSocket);
+			closesocket(acceptSocket);
+			cout << "\tConnection closed\n";
 			//WSACleanup();
 		}
 		else if (iRecv == 0)
 		{
-			cout << "Connection closed\n";
+			cout << "\tConnection closed\n";
 			cleanup(acceptSocket);
 			return 0;
 		}
@@ -195,12 +199,13 @@ int main()
 		closesocket(mySocket);
 	
 		requestCount++;
-		cout << "Request since last update: " << requestCount << "\n";
-		if (requestCount >= HOTSWAP) {
+		requestSinceUpdate++;
+		cout << "Total requests handled: " << requestCount << "\n";
+		if (requestSinceUpdate >= HOTSWAP) {
 			cout << "Hot swap updating...\n";
 			localVersion = getLocalVersion();
 			readData(num1, num2);
-			requestCount = 0;
+			requestSinceUpdate = 0;
 		}
 
 	}

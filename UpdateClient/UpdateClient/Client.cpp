@@ -20,6 +20,12 @@ const int  UPDATE = 2;
 char		recvMessage[STRLEN];
 char		sendMessage[STRLEN];
 
+void cleanup(SOCKET socket)
+{
+	closesocket(socket);
+	WSACleanup();
+}
+
 // Returns the version number from the data file
 int getLocalVersion();
 
@@ -61,7 +67,7 @@ int main()
 		return 1;
 	}
 
-	cout << "\nAttempting to connect...\n";
+	//cout << "\nAttempting to connect...\n";
 
 	// Setup a SOCKADDR_IN structure which will be used to hold address
 	// and port information for the server. Notice that the port must be converted
@@ -76,46 +82,49 @@ int main()
 	if (connect(mySocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
 	{
 		cerr << "ERROR: Failed to connect\n";
-		//cleanup(mySocket);
+		cleanup(mySocket);
 		return 1;
 	}
 
-	cout << "Connected...\n\n";
+	cout << "Checking for updates...\n";
 
+	//Send request for version number
 	int iSend = send(mySocket, "1", strlen("1") + 1, 0);
 	if (iSend == SOCKET_ERROR)
 	{
 		cerr << "ERROR: Failed to send message\n";
-		//cleanup(mySocket);
+		cleanup(mySocket);
 		return 1;
 	}
 
 	// Wait to receive a reply message back from the remote computer
-	cout << "\n\t--WAIT--\n\n";
+	//cout << "\n\t--WAIT--\n\n";
 	int iRecv = recv(mySocket, recvMessage, STRLEN, 0);
 	if (iRecv > 0)
 	{
+		//change version number char[4] into int
 		std::memcpy(&currentVersion, recvMessage, sizeof(int));
-		cout << "Recv  -- > " << currentVersion << "\n";
+		//cout << "Recv  -- > " << currentVersion << "\n";
 	}
 	else if (iRecv == 0)
 	{
-		cout << "Connection closed\n";
-		//cleanup(mySocket);
+		//cout << "Connection closed\n";
+		cleanup(mySocket);
 		return 0;
 	}
 	else
 	{
 		cerr << "ERROR: Failed to receive message\n";
-		//cleanup(mySocket);
+		cleanup(mySocket);
 		return 1;
 	}
 
-	cout << localVersion << " CUR-> " << currentVersion << "\n";
-
+	//cout << localVersion << " CUR-> " << currentVersion << "\n";
+	
+	//Update local file
 	if (localVersion != currentVersion) {
-		//UPDATE
-		cout << "\nNot up to date.";
+		
+		cout << "Downloading updates...\n";
 
 		//ofstream dataFile;
 		//openOutputFile(dataFile, FILENAME);
@@ -130,7 +139,7 @@ int main()
 					return 1;
 			}
 
-		cout << "\nAttempting to connect...\n";
+		//cout << "\nAttempting to connect...\n";
 
 		// Setup a SOCKADDR_IN structure which will be used to hold address
 		// and port information for the server. Notice that the port must be converted
@@ -145,52 +154,55 @@ int main()
 		if (connect(mySocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
 		{
 			cerr << "ERROR: Failed to connect\n";
-			//cleanup(mySocket);
+			cleanup(mySocket);
 			return 1;
 		}
 
-		cout << "Connected...\n\n";
+		//cout << "Connected...\n\n";
 
+		//Request update data
 		int iSend = send(mySocket, "2", strlen("2") + 1, 0);
 
 		// Wait to receive a reply message back from the server with num1
-		cout << "\n\t--WAITING FOR NUM1--\n\n";
+		//cout << "\n\t--WAITING FOR NUM1--\n\n";
 		int iRecv = recv(mySocket, recvMessage, STRLEN, 0);
 		if (iRecv > 0)
 		{
+			//Change num1 char[4] to int
 			std::memcpy(&num1, recvMessage, sizeof(int));
-			cout << "Recv num 1 > " << num1 << "\n";
+			//cout << "Recv num 1 > " << num1 << "\n";
 		}
 		else if (iRecv == 0)
 		{
 			cout << "Connection closed\n";
-			//cleanup(mySocket);
+			cleanup(mySocket);
 			return 0;
 		}
 		else
 		{
 			cerr << "ERROR: Failed to receive message\n";
-			//cleanup(mySocket);
+			cleanup(mySocket);
 			return 1;
 		}
-		// Wait to receive a reply message back from the server with num1
-		cout << "\n\t--WAITING FOR NUM2--\n\n";
+		// Wait to receive a reply message back from the server with num2
+		//cout << "\n\t--WAITING FOR NUM2--\n\n";
 		int iRecv2 = recv(mySocket, recvMessage, STRLEN, 0);
 		if (iRecv2 > 0)
 		{
+			//Change num2 char[4] to int
 			std::memcpy(&num2, recvMessage, sizeof(int));
-			cout << "Recv num 2 > " << num2 << "\n";
+			//cout << "Recv num 2 > " << num2 << "\n";
 		}
 		else if (iRecv2 == 0)
 		{
 			cout << "Connection closed\n";
-			//cleanup(mySocket);
+			cleanup(mySocket);
 			return 0;
 		}
 		else
 		{
 			cerr << "ERROR: Failed to receive message\n";
-			//cleanup(mySocket);
+			cleanup(mySocket);
 			return 1;
 		}
 
@@ -201,27 +213,31 @@ int main()
 		writeInt(dataFile, currentVersion);
 		writeInt(dataFile, num1);
 		writeInt(dataFile, num2);
+		cout << "Update finished\n";
+	
 	}
 	else {
-		cout << "Program is up to date. \n";
+		cout << "No updates found\n";
 	}
 	closesocket(mySocket);
 	WSACleanup();
 
-	
+	//Start of Calculator program
+	cout << "\nSum Calculator Version " << localVersion << "\n";
 
-	cout << "\nSum Calculator Version " << localVersion << "\n\n";
-
+	//Read numbers from local file.
 	readData(num1, num2);	
 	sum = num1 + num2;
-	cout << "The sum of " << num1 << " and " << num2 << " is " << sum << endl;
+	cout << "\nThe sum of " << num1 << " and " << num2 << " is " << sum << "\n" << endl;
 
-	std::cout << "Paused. Press Enter to continue.";
-	std::cin.ignore(100000, '\n');
+	//Wait until user presses enter to close cmd.
+	//std::cout << "Paused. Press Enter to continue.";
+	//std::cin.ignore(100000, '\n');
 
 	return 0;
 }
 
+// Returns the version number from the data file
 int getLocalVersion()
 {
 	ifstream dataFile;
@@ -233,6 +249,9 @@ int getLocalVersion()
 	return version;
 }
 
+// Reads the two data values from the data file.
+// When the function ends, num1 and num2 will be holding the
+// two values that were read from the file.
 void readData(int& num1, int& num2)
 {
 	ifstream dataFile;
@@ -246,10 +265,4 @@ void readData(int& num1, int& num2)
 	num2 = readInt(dataFile);
 
 	dataFile.close();
-}
-
-void cleanup(SOCKET socket)
-{
-	closesocket(socket);
-	WSACleanup();
 }
