@@ -9,6 +9,7 @@ For this assignment, you will be writing two programs which are designed to talk
 - **Include group names** You must include your name, and a description of the file, in a commented section at the beginning of every file you create.
 - Commenting
 - **Do not use system("pause")** Remove "Press Enter to continue." from program before submitting.
+- **Check that program meets "Program Requirements"** [http://rhoggard.cs.ecu.edu/rhoggard/3010/programRequirements.aspx](http://rhoggard.cs.ecu.edu/rhoggard/3010/programRequirements.aspx)
 
 ## Requirements
 ### Server:
