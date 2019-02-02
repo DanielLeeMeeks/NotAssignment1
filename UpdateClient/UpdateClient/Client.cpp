@@ -95,7 +95,8 @@ int main()
 	int iRecv = recv(mySocket, recvMessage, STRLEN, 0);
 	if (iRecv > 0)
 	{
-		cout << "Recv > " << recvMessage << "\n";
+		std::memcpy(&currentVersion, recvMessage, sizeof(int));
+		cout << "Recv  -- > " << currentVersion << "\n";
 	}
 	else if (iRecv == 0)
 	{
@@ -110,9 +111,15 @@ int main()
 		return 1;
 	}
 
+	cout << localVersion << " CUR-> " << currentVersion << "\n";
+
 	if (localVersion != currentVersion) {
 		//UPDATE
 		cout << "\nNot up to date.";
+
+		//ofstream dataFile;
+		//openOutputFile(dataFile, FILENAME);
+		//writeNotInt(dataFile, recvMessage);
 
 			mySocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -146,12 +153,13 @@ int main()
 
 		int iSend = send(mySocket, "2", strlen("2") + 1, 0);
 
-		// Wait to receive a reply message back from the remote computer
-		cout << "\n\t--WAIT--\n\n";
+		// Wait to receive a reply message back from the server with num1
+		cout << "\n\t--WAITING FOR NUM1--\n\n";
 		int iRecv = recv(mySocket, recvMessage, STRLEN, 0);
 		if (iRecv > 0)
 		{
-			cout << "Recv > " << recvMessage << "\n";
+			std::memcpy(&num1, recvMessage, sizeof(int));
+			cout << "Recv num 1 > " << num1 << "\n";
 		}
 		else if (iRecv == 0)
 		{
@@ -165,11 +173,42 @@ int main()
 			//cleanup(mySocket);
 			return 1;
 		}
+		// Wait to receive a reply message back from the server with num1
+		cout << "\n\t--WAITING FOR NUM2--\n\n";
+		int iRecv2 = recv(mySocket, recvMessage, STRLEN, 0);
+		if (iRecv2 > 0)
+		{
+			std::memcpy(&num2, recvMessage, sizeof(int));
+			cout << "Recv num 2 > " << num2 << "\n";
+		}
+		else if (iRecv2 == 0)
+		{
+			cout << "Connection closed\n";
+			//cleanup(mySocket);
+			return 0;
+		}
+		else
+		{
+			cerr << "ERROR: Failed to receive message\n";
+			//cleanup(mySocket);
+			return 1;
+		}
 
 		
+		//Write new numbers to file
+		ofstream dataFile;
+		openOutputFile(dataFile, FILENAME);
+		writeInt(dataFile, currentVersion);
+		writeInt(dataFile, num1);
+		writeInt(dataFile, num2);
+	}
+	else {
+		cout << "Program is up to date. \n";
 	}
 	closesocket(mySocket);
 	WSACleanup();
+
+	
 
 	cout << "\nSum Calculator Version " << localVersion << "\n\n";
 

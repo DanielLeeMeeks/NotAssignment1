@@ -1,4 +1,4 @@
 ﻿  Client.cpp
 e:\school\_csci 3010\update\updateclient\updateclient\client.cpp(85): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-e:\school\_csci 3010\update\updateclient\updateclient\client.cpp(147): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+e:\school\_csci 3010\update\updateclient\updateclient\client.cpp(154): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   UpdateClient.vcxproj -> E:\School\_CSCI 3010\Update\UpdateClient\x64\Debug\UpdateClient.exe

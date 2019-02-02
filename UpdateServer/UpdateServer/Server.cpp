@@ -2,6 +2,7 @@
 #include <Ws2tcpip.h>
 #include <iostream>
 #include "FileHelper.h"
+#include <sstream>
 using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -18,6 +19,15 @@ SOCKET		listenSocket;
 SOCKET		acceptSocket;
 SOCKADDR_IN	serverAddr;
 
+int num1 = 0;
+int num2 = 0;
+
+void cleanup(SOCKET socket)
+{
+	closesocket(socket);
+	WSACleanup();
+}
+
 int getLocalVersion()
 {
 	ifstream dataFile;
@@ -26,13 +36,31 @@ int getLocalVersion()
 	int version = readInt(dataFile);
 	dataFile.close();
 
+	cout << "The server version is: " << version;
+
 	return version;
+}
+
+void readData(int& num1, int& num2)
+{
+	ifstream dataFile;
+	openInputFile(dataFile, FILENAME);
+
+	// Read the version number and discard it
+	int tmp = num1 = readInt(dataFile);
+
+	// Read the two data values
+	num1 = readInt(dataFile);
+	num2 = readInt(dataFile);
+
+	dataFile.close();
 }
 
 int main()
 {
-	
+
 	int localVersion = getLocalVersion();
+	readData(num1, num2);
 
 	//cin >> PORT;
 	//cin.ignore();
@@ -69,7 +97,7 @@ int main()
 	if (bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
 	{
 		cerr << "ERROR: Cannot bind to port\n";
-		//cleanup(listenSocket);
+		cleanup(listenSocket);
 		return 1;
 	}
 
@@ -79,7 +107,7 @@ int main()
 	if (listen(listenSocket, 1) == SOCKET_ERROR)
 	{
 		cerr << "ERROR: Problem with listening on socket\n";
-		//cleanup(listenSocket);
+		cleanup(listenSocket);
 		return 1;
 	}
 
@@ -107,24 +135,34 @@ int main()
 		{
 			cout << "Recv > " << recvMessage << "\n";
 			//int iSend = send(acceptSocket, "2", strlen("2") + 1, 0);
-			cout << strcmp(recvMessage, "1");
 			if (strcmp(recvMessage, "1") == 0) {
-				cout << "getCurrentVersion";
-				int iSend = send(acceptSocket, "2", strlen("2") + 1, 0);//TODO: REAL VERSION
+				cout << "getCurrentVersion " << localVersion;
+				//int localVersion = 3;
+
+				int iSend = send(acceptSocket, (char*)&localVersion, sizeof(localVersion), 0);//TODO: REAL VERSION
 				if (iSend == SOCKET_ERROR)
 				{
 					cerr << "ERROR: Failed to send message\n";
-					//cleanup(mySocket);
+					cleanup(mySocket);
 					return 1;
 				}
 			}
 			else if (strcmp(recvMessage, "2") == 0) {
 				cout << "getCurrentVersion";
-				int iSend = send(acceptSocket, "7, 5", strlen("5, 5") + 1, 0);//TODO: REAL Data
+				//SEND 1st number
+				int iSend = send(acceptSocket, (char*)&num1, sizeof(num1) + 1, 0);
 				if (iSend == SOCKET_ERROR)
 				{
 					cerr << "ERROR: Failed to send message\n";
-					//cleanup(mySocket);
+					cleanup(mySocket);
+					return 1;
+				}
+				//SEND 2nd number
+				int iSend2 = send(acceptSocket, (char*)&num2, sizeof(num2) + 1, 0);
+				if (iSend2 == SOCKET_ERROR)
+				{
+					cerr << "ERROR: Failed to send message\n";
+					cleanup(mySocket);
 					return 1;
 				}
 			}
@@ -133,7 +171,7 @@ int main()
 				if (iSend == SOCKET_ERROR)
 				{
 					cerr << "ERROR: Failed to send message\n";
-					//cleanup(mySocket);
+					cleanup(mySocket);
 					return 1;
 				}
 			}
@@ -143,29 +181,23 @@ int main()
 		else if (iRecv == 0)
 		{
 			cout << "Connection closed\n";
-			//cleanup(acceptSocket);
-			//return 0;
+			cleanup(acceptSocket);
+			return 0;
 		}
 		else
 		{
 			cerr << "ERROR: Failed to receive message\n";
-			//cleanup(acceptSocket);
+			cleanup(acceptSocket);
 			return 1;
 		}
-		//closesocket(mySocket);
+		closesocket(mySocket);
 	}
 
 	std::cout << "Paused. Press Enter to continue.";
 	std::cin.ignore(100000, '\n');
 
-	//cleanup(acceptSocket);
+	cleanup(acceptSocket);
 
 	return 0;
-}
-
-void cleanup(SOCKET socket)
-{
-	closesocket(socket);
-	WSACleanup();
 }
 
